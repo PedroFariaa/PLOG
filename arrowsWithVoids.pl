@@ -2,7 +2,7 @@
 :-use_module(library(lists)).
 
 
-init(Board, M, N):-
+init:-
     write("WELCOME TO ARROWS WITH VOIDS"),
     write("Please enter the board dimensions:"),
     write("Introduce the length of the board"),
@@ -15,32 +15,41 @@ init(Board, M, N):-
     initializeBoard(Board, M, N).
 
 /*
-fillColumns ([_], _).
-fillColumns ([A|T]], N):-
-    length(A, N),
-    domain(A, 0, 8),
-    all_distinct(A),
-    fillColumns(A, N).
+fillColumns ([], _).
+            
+fillColumns ([H|T], N):-
+    length(H, N),
+    domain(H, 0, 8),
+    all_distinct(H),
+    fillColumns(H, N).
+*/
 
 initializeBoard(Board, M, N):-
     length(Board, M),
     domain(Board, 0, 8),
-    fillColumns(Board, N).
-*/
+   % fillColumns(Board, N).
 
-/*
-showResults:-
-    labeling([maximize(Sum)], Vars),
-     showBoard(),
-     showAnswer().
+showLine([]).
+showLine([H|T]):-
+        H = 9,
+        !,
+        write('-'),
+        showLine(T).
 
-showBoard:-
-      write('w').
+showLine([H|T]):-
+        write(H),
+        showLine(T).
 
-showAnswer:-
-      write('q').
-*/
+showBoard([]).
+showBoard([H|T]):-
+        showLine(H),
+        write(','),
+        showBoard(T).  
 
+showAnswer(Sum, [H|T]):-
+      write('Sum: '), write(Sum), nl,
+      showBoard([H|T]).           
+ 
 
 first:-
     A1 is 0, A2 is 0, A3 is 0, B1 is 0, B2 is 0, B3 is 0, C1 is 0, C2 is 0, C3 is 0,
@@ -49,75 +58,73 @@ first:-
 
 rest([]).
 rest([H|T]):-
-        domain(H, 0, 8),
+        % 9 represents the empty space
+        domain(H, 0, 9),
         all_distinct(H),
         rest(T).
-
-showAnswer(Sum, A1, A2, A3, B1, B2, B3, C1, C2, C3):-
-      write('Sum: '), write(Sum), nl,
-      write(A1), write(A2), write(A3),
-      write(','),
-      write(B1), write(B2), write(B3),
-      write(','),
-      write(C1), write(C2), write(C3). 
-
-lab([]).
-lab([H|T]):-
-    SumLine is 0,
-    labeling(maximize(sum(H, SumLine))),
-    lab(T).
-
-sum([]).
-sum([H|T], SumLine):-
-    SumLine is SumLine + H,
-    sum(T, SumLine).
-
 
 updateBoardHor([]).
 updateBoardHor([H|T]):-
         H is H + 1,
         updateBoardHor(T).
 
-arrowLeftConditions([], []).
-arrowLeftConditions([H|T], [C|K]):-
+arrowConditions([], []).
+arrowConditions([H|T], [C|K]):-
         C is 1,
         !,
         updateBoardHor(H),
-        arrowLeftConditions(T, K).
+        arrowConditions(T, K).
         
-arrowLeftConditions([H|T], [C|K]):-
+arrowConditions([H|T], [C|K]):-
         C is 2,
         !,
-        updateBoardLeft2(H),
-        arrowLeftConditions(T, K).
+        updateBoardCima(H),
+        arrowConditions(T, K).
         
-arrowLeftConditions([H|T], [C|K]):-
+arrowConditions([H|T], [C|K]):-
         C is 3,
         !,
-        updateBoardLeft3(H),
-        arrowLeftConditions(T, K).
+        updateBoardBaixo(H),
+        arrowConditions(T, K).
 
+calcSum([], _).
+calcSum(Sum, [H|T]):-
+   H < 9,
+   !,
+   Sum #= Sum + H ,
+   calcSum(Sum, T).
+
+calcSum(Sum, [H|T]):-
+   H >= 9,
+   !,
+   calcSum(Sum, T).
 
 restrictions:-
     Vars=[[A1, A2, A3], [B1, B2, B3], [C1, C2, C3]],
-    Vars2 = [[SE1, SE2, SE3], [SD1, SD2, SD3], [SB1, SB2, SB3], [SC1, SC2, SC3]],
+    SE = [SE1, SE2, SE3],
+    SD = [SD1, SD2, SD3],
+    SB = [SB1, SB2, SB3],
+    SC = [SC1, SC2, SC3],
     % Numbers in Cells must belong to domain [0, 8]
-
+    
     % domain(Vars2, 1, 3),
+    
     % Distinct Numbers in lines and columns
     rest(Vars),
     transpose(Vars, NVars),
     rest(NVars),
 
-    %empty places can't share an edge
-    	%check with Distinct
-
-    arrowLeftConditions(Vars, SE),
-
+    arrowConditions(Vars, SE),
+    arrowConditions(Vars, SD),
+    arrowConditions(NVars, SC),
+    arrowConditions(NVars, SB),
+    
     % maximizing the sum
-    lab(Vars),
+    labeling([maximize(Sum)], [A1, A2, A3, B1, B2, B3, C1, C2, C3, SE1, SE2, SE3, SD1, SD2, SD3, SB1, SB2, SB3, SC1, SC2, SC3]),
+    
+    Sum is 0,
+    calcSum(Sum, Vars),
 
-    Sum is A1 + A2 + A3 + B1 + B2 + B3 + C1 + C2 + C3,
     showAnswer(Sum, A1, A2, A3, B1, B2, B3, C1, C2, C3).
 
 
