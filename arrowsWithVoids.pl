@@ -53,6 +53,14 @@ rest([H|T]):-
         all_distinct(H),
         rest(T).
 
+showAnswer(Sum, A1, A2, A3, B1, B2, B3, C1, C2, C3):-
+      write('Sum: '), write(Sum), nl,
+      write(A1), write(A2), write(A3),
+      write(','),
+      write(B1), write(B2), write(B3),
+      write(','),
+      write(C1), write(C2), write(C3). 
+
 lab([]).
 lab([H|T]):-
     SumLine is 0,
@@ -63,6 +71,32 @@ sum([]).
 sum([H|T], SumLine):-
     SumLine is SumLine + H,
     sum(T, SumLine).
+
+
+updateBoardHor([]).
+updateBoardHor([H|T]):-
+        H is H + 1,
+        updateBoardHor(T).
+
+arrowLeftConditions([], []).
+arrowLeftConditions([H|T], [C|K]):-
+        C is 1,
+        !,
+        updateBoardHor(H),
+        arrowLeftConditions(T, K).
+        
+arrowLeftConditions([H|T], [C|K]):-
+        C is 2,
+        !,
+        updateBoardLeft2(H),
+        arrowLeftConditions(T, K).
+        
+arrowLeftConditions([H|T], [C|K]):-
+        C is 3,
+        !,
+        updateBoardLeft3(H),
+        arrowLeftConditions(T, K).
+
 
 restrictions:-
     Vars=[[A1, A2, A3], [B1, B2, B3], [C1, C2, C3]],
@@ -76,13 +110,15 @@ restrictions:-
     rest(NVars),
 
     %empty places can't share an edge
-    
+    	%check with Distinct
+
+    arrowLeftConditions(Vars, SE),
 
     % maximizing the sum
     lab(Vars),
 
     Sum is A1 + A2 + A3 + B1 + B2 + B3 + C1 + C2 + C3,
-    write(Sum).
+    showAnswer(Sum, A1, A2, A3, B1, B2, B3, C1, C2, C3).
 
 
 /*
