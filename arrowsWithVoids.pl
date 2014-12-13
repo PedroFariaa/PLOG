@@ -39,8 +39,8 @@ showBoard:-
 
 showAnswer:-
       write('q').
-*/        
- 
+*/
+
 
 first:-
     A1 is 0, A2 is 0, A3 is 0, B1 is 0, B2 is 0, B3 is 0, C1 is 0, C2 is 0, C3 is 0,
@@ -53,20 +53,34 @@ rest([H|T]):-
         all_distinct(H),
         rest(T).
 
+lab([]).
+lab([H|T]):-
+    SumLine is 0,
+    labeling(maximize(sum(H, SumLine))),
+    lab(T).
+
+sum([]).
+sum([H|T], SumLine):-
+    SumLine is SumLine + H,
+    sum(T, SumLine).
+
 restrictions:-
     Vars=[[A1, A2, A3], [B1, B2, B3], [C1, C2, C3]],
     Vars2 = [[SE1, SE2, SE3], [SD1, SD2, SD3], [SB1, SB2, SB3], [SC1, SC2, SC3]],
     % Numbers in Cells must belong to domain [0, 8]
-    
+
     % domain(Vars2, 1, 3),
     % Distinct Numbers in lines and columns
     rest(Vars),
     transpose(Vars, NVars),
     rest(NVars),
+
+    %empty places can't share an edge
     
+
     % maximizing the sum
-    labeling([maximize(A1 + A2 + A3 + B1 + B2 + B3 + C1 + C2 + C3)], [A1, A2, A3, B1, B2, B3, C1, C2, C3, SE1, SE2, SE3, SD1, SD2, SD3, SB1, SB2, SB3, SC1, SC2, SC3]),
-    
+    lab(Vars),
+
     Sum is A1 + A2 + A3 + B1 + B2 + B3 + C1 + C2 + C3,
     write(Sum).
 
