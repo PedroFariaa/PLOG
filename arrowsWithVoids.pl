@@ -3,31 +3,49 @@
 
 
 init:-
-    write("WELCOME TO ARROWS WITH VOIDS"),
-    write("Please enter the board dimensions:"),
-    write("Introduce the length of the board"),
+    write('WELCOME TO ARROWS WITH VOIDS'), nl,
+    write('Please enter the board dimensions:'), nl,
+    write('Introduce the length of the board'), nl,
     read(M),
-    %board check
-    M < 10, !,
-    write("Introduce the height of the board"),
+    read(M),
+    %board size check
+    M < 10,
+    M > 0, !,
     read(N),
-    N < 10, !,
-    initializeBoard(Board, M, N).
+    N < 10,
+    N > 0, !,
+    initializeBoard(Board, M, N),
+    initializeArrows(Arrows, M, N),
+    Sum is 0,
+    restrictions(Sum, Board, Arrows),
+    write('Funciona'), nl, nl,
+    showAnswer(Sum, Board).
 
-/*
-fillColumns ([], _).
-            
-fillColumns ([H|T], N):-
-    length(H, N),
-    domain(H, 0, 8),
-    all_distinct(H),
-    fillColumns(H, N).
-*/
+addToEnd([], E, [E]).
+addToEnd([H|T], E, [H|C]):-
+    addToEnd(T, E, C).
 
+initializeBoard([], _, _).
 initializeBoard(Board, M, N):-
-    length(Board, M),
-    domain(Board, 0, 8),
-   % fillColumns(Board, N).
+    length(Lista, M),
+    addToEnd(Board2, Lista, Board),
+    N2 is N-1,
+    initializeBoard(Board2, M, N2).
+
+initializeArrows([], _, _).
+initializeArrows(Arrows, M, N):-
+    length(SE, N),
+    domain(SE, 1, 3),
+    addToEnd(Arrows, SE, Arrows),
+    length(SD, N),
+    domain(SD, 1, 3),
+    addToEnd(Arrows, SD, Arrows),
+    length(SC, M),
+    domain(SC, 1, 3),
+    addToEnd(Arrows, SC, Arrows),
+    length(SB, M),
+    domain(SB, 1, 3),
+    addToEnd(Arrows, SB, Arrows),
 
 showLine([]).
 showLine([H|T]):-
@@ -35,7 +53,6 @@ showLine([H|T]):-
         !,
         write('-'),
         showLine(T).
-
 showLine([H|T]):-
         write(H),
         showLine(T).
@@ -49,44 +66,16 @@ showBoard([H|T]):-
 showAnswer(Sum, [H|T]):-
       write('Sum: '), write(Sum), nl,
       showBoard([H|T]).           
- 
 
-first:-
-    A1 is 0, A2 is 0, A3 is 0, B1 is 0, B2 is 0, B3 is 0, C1 is 0, C2 is 0, C3 is 0,
-    SE1 is 0, SE2 is 0, SE3 is 0, SD1 is 0, SD2 is 0, SD3 is 0, SB1 is 0, SB2 is 0, SB3 is 0, SC1 is 0, SC2 is 0, SC3 is 0,
-    restrictions.
 
-rest([]).
-rest([H|T]):-
+restNumb([]).
+restNumb([H|T]):-
         % 9 represents the empty space
         domain(H, 0, 9),
         all_distinct(H),
-        rest(T).
+        restNumb(T).
 
-updateBoardHor([]).
-updateBoardHor([H|T]):-
-        H is H + 1,
-        updateBoardHor(T).
-
-arrowConditions([], []).
-arrowConditions([H|T], [C|K]):-
-        C is 1,
-        !,
-        updateBoardHor(H),
-        arrowConditions(T, K).
         
-arrowConditions([H|T], [C|K]):-
-        C is 2,
-        !,
-        updateBoardCima(H),
-        arrowConditions(T, K).
-        
-arrowConditions([H|T], [C|K]):-
-        C is 3,
-        !,
-        updateBoardBaixo(H),
-        arrowConditions(T, K).
-
 calcSum([], _).
 calcSum(Sum, [H|T]):-
    H < 9,
@@ -99,37 +88,82 @@ calcSum(Sum, [H|T]):-
    !,
    calcSum(Sum, T).
 
-restrictions:-
-    Vars=[[A1, A2, A3], [B1, B2, B3], [C1, C2, C3]],
-    SE = [SE1, SE2, SE3],
-    SD = [SD1, SD2, SD3],
-    SB = [SB1, SB2, SB3],
-    SC = [SC1, SC2, SC3],
-    % Numbers in Cells must belong to domain [0, 8]
-    
-    % domain(Vars2, 1, 3),
-    
-    % Distinct Numbers in lines and columns
-    rest(Vars),
-    transpose(Vars, NVars),
-    rest(NVars),
+appendBoard(_, []).
+appendBoard(Vars, [H|T]):-
+        append(Vars, H, Vars),
+        appendBoard(Vars, T).
 
-    arrowConditions(Vars, SE),
-    arrowConditions(Vars, SD),
-    arrowConditions(NVars, SC),
-    arrowConditions(NVars, SB),
+appendArrows(_, []).
+appendArrows(Vars, [C|K]):-
+        append(Vars, C, Vars),
+        appendArrows(Vars, K).
+
+appendVars(Vars, [H|T], [C|K]):-
+        appendBoard(Vars, [H|T]),
+        appendArrows(Vars, [C|K]).
+
+arrowRestrictions([]).
+arrowRestrictions([C|K]):-
+        domain(C, 1, 3),
+        arrowRestrictions(K).
+
+restrictions(Sum, [H|T], [C|K]):- 
+    restNumb([H|T]),
+    transpose([H|T], BoardT),
+    restNumb(BoardT),
+    
+    arrowRestrictions([C|K]),
+    
+    calcSum(Sum, [H|T]),
+    
+    %append para Vars
+    appendVars(Vars, [H|T], [C|K]),
     
     % maximizing the sum
-    labeling([maximize(Sum)], [A1, A2, A3, B1, B2, B3, C1, C2, C3, SE1, SE2, SE3, SD1, SD2, SD3, SB1, SB2, SB3, SC1, SC2, SC3]),
-    
-    Sum is 0,
-    calcSum(Sum, Vars),
+    labeling([maximize(Sum)], Vars).
 
-    showAnswer(Sum, A1, A2, A3, B1, B2, B3, C1, C2, C3).
 
 
 /*
-    Arrows must point inside the rectangle
-    Verify comformaty between numbers and pointing arrows
-    Unique arrow solution
+updateBoardHor([]).
+updateBoardHor([H|T]):-
+        H is H + 1,
+        updateBoardHor(T).
+
+updateBoardCima([], _, _).
+updateBoardCima(Board, P, Q):-
+        Q is Q + 1,
+        P is P - 1,
+        P > 0,
+        Q < M,
+        !,
+        nth1(P, Board, Line),
+        nth1(Q, Line, Elem),
+        Elem is Elem + 1,
+        updateBoardCima(Board, P, Q).
+        
+
+arrowCondInc([], [], _).
+arrowCondInc([H|T], [C|K], P):-
+        C is 1,
+        !,
+        P is P + 1,
+        updateBoardHor(H),
+        arrowCondInc(T, K, P).
+        
+arrowCondInc([H|T], [C|K], P):-
+        C is 2,
+        !,
+        P is P + 1,
+        Q is 0,
+        updateBoardCima([H|T], P, Q),
+        arrowCondInc(T, K, P).
+        
+arrowCondInc([H|T], [C|K], P):-
+        C is 3,
+        !,
+        P is P + 1,
+        updateBoardBaixo(H),
+        arrowCondInc(T, K, P).
 */
+
